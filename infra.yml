@@ -28,7 +28,6 @@
           - ca-certificates
           - gnupg
           - lsb-release
-          - kubernetes
         state: present
     
     - name: Create ansible user

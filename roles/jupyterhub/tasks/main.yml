@@ -1,4 +1,10 @@
 ---
+- name: Install bottle python package
+  ansible.builtin.pip:
+    name: kubernetes
+    state: present
+  become_user: "{{ ansible_user }}"
+
 - name: Create JupyterHub namespace
   kubernetes.core.k8s:
     name: "{{ jupyterhub_namespace }}"
@@ -13,9 +19,7 @@
     record: jhub-test
     type: A
     value: "{{ ansible_host }}"
-    account_email: "{{ cloudflare_email }}"
-    account_api_key: "{{ cloudflare_api_token }}"
-  register: record
+    api_token: "{{ cloudflare_api_token }}"
 
 - name: Create Cloudflare API token secret
   kubernetes.core.k8s:

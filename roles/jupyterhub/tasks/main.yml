@@ -10,7 +10,7 @@
 - name: Create a plusai.is A record
   community.general.cloudflare_dns:
     zone: plusai.is
-    record: test
+    record: jhub-test
     type: A
     value: "{{ ansible_host }}"
     account_email: "{{ cloudflare_email }}"

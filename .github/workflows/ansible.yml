@@ -1,0 +1,93 @@
+name: Ansible deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: Which stack to deploy
+        required: true
+        type: choice
+        options: [infra, prod, app]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    # ---------- common tools ----------
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Ansible and required collections
+      run: |
+        python -m pip install --upgrade pip
+        pip install ansible-core==2.16.6
+        ansible-galaxy collection install -r requirements.yml
+
+    # ---------- SSH access ----------
+    - name: Add SSH key
+      run: |
+        eval "$(ssh-agent -s)"
+        ssh-add - <<< "${{ secrets.HOST_KEY }}"
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        ssh-keyscan -H "${{ secrets.HOST1_IP }}" >> ~/.ssh/known_hosts
+
+    # ---------- dynamic inventory ----------
+    - name: Generate inventory file
+      shell: bash
+      run: |
+        if [[ "${{ github.event.inputs.type }}" == "infra" ]]; then
+          mkdir -p inventories/infra
+          cat > inventories/infra/hosts.yml <<'EOF'
+infra:
+  hosts:
+    tencent-ubuntu-va:
+      ansible_host: ${{ secrets.HOST1_IP }}
+      ansible_user: ${{ secrets.HOST1_USER }}
+  vars:
+    ansible_become: yes
+    ansible_python_interpreter: /usr/bin/python3
+EOF
+        else
+          mkdir -p inventories/prod
+          cat > inventories/prod/hosts.yml <<'EOF'
+infra:
+  hosts:
+    tencent-ubuntu-va:
+      ansible_host: ${{ secrets.HOST1_IP }}
+      ansible_user: ${{ secrets.HOST1_USER }}
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+EOF
+        fi
+
+    # ---------- infra flow ----------
+    - name: Run infra playbook
+      if: ${{ github.event.inputs.type == 'infra' }}
+      env:
+        ANSIBLE_SSH_PUBLIC_KEY: ${{ secrets.ANSIBLE_SSH_PUBLIC_KEY }}
+      run: |
+        ansible-playbook -i inventories/infra infra.yml
+
+    # ---------- prod flow ----------
+    - name: Run prod playbook
+      if: ${{ github.event.inputs.type == 'prod' }}
+      run: |
+        ansible-playbook -i inventories/prod prod.yml
+
+    # ---------- app flow ----------
+    - name: Run app playbooks
+      if: ${{ github.event.inputs.type == 'app' }}
+      env:
+        LETSENCRYPT_EMAIL:    ${{ secrets.LETSENCRYPT_EMAIL }}
+        CLOUDFLARE_EMAIL:     ${{ secrets.CLOUDFLARE_EMAIL }}
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      run: |
+        ansible-playbook -i inventories/prod jupyter_hub.yml
+        ansible-playbook -i inventories/prod

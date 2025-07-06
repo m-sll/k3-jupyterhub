@@ -1,0 +1,6 @@
+---
+# Master playbook to run all deployment tasks
+- import_playbook: infra.yml
+- import_playbook: k3s_and_firewall.yml
+- import_playbook: jupyter_hub.yml
+- import_playbook: prefect_worker.yml

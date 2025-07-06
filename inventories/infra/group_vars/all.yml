@@ -1,0 +1,5 @@
+---
+# Global variables for all hosts
+
+# SSH configuration
+ansible_ssh_public_key: "{{ lookup('env', 'ANSIBLE_SSH_PUBLIC_KEY') | default('') }}"

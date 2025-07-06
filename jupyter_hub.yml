@@ -1,0 +1,44 @@
+---
+- name: Deploy JupyterHub on K3s
+  hosts: k3s_cluster
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Ensure K3s is running
+      systemd:
+        name: k3s
+        state: started
+      
+    - name: Install cert-manager for SSL certificates
+      kubernetes.core.helm:
+        name: cert-manager
+        chart_ref: jetstack/cert-manager
+        release_namespace: "{{ certmanager_namespace }}"
+        create_namespace: yes
+        values:
+          installCRDs: true
+      become_user: "{{ ansible_user }}"
+  
+  roles:
+    - jupyterhub
+  
+  post_tasks:
+    - name: Wait for JupyterHub to be ready
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ jupyterhub_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/component=hub
+      register: hub_pods
+      until: hub_pods.resources[0].status.phase == "Running"
+      retries: 30
+      delay: 20
+      become_user: "{{ ansible_user }}"
+    
+    - name: Display JupyterHub access information
+      debug:
+        msg:
+          - "JupyterHub is now accessible at: https://{{ jupyterhub_domain }}"
+          - "Make sure your DNS points to the cluster's public IP"

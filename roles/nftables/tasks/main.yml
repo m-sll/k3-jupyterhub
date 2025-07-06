@@ -1,0 +1,36 @@
+---
+- name: Install nftables
+  apt:
+    name: nftables
+    state: present
+    update_cache: yes
+
+- name: Stop and disable iptables if present
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: no
+  loop:
+    - iptables
+    - ip6tables
+  ignore_errors: yes
+
+- name: Create nftables configuration
+  template:
+    src: nftables.conf.j2
+    dest: "{{ nftables_config_path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: restart nftables
+
+- name: Validate nftables configuration
+  command: "nft -c -f {{ nftables_config_path }}"
+  changed_when: false
+
+- name: Enable and start nftables service
+  systemd:
+    name: nftables
+    state: started
+    enabled: yes
+    daemon_reload: yes

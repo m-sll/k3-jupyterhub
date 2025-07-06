@@ -1,0 +1,55 @@
+---
+- name: Create Prefect worker values file
+  template:
+    src: prefect-worker-values.yml.j2
+    dest: /tmp/prefect-worker-values.yml
+    mode: '0644'
+
+- name: Deploy Prefect Worker using Helm
+  kubernetes.core.helm:
+    name: prefect-worker
+    chart_ref: prefect/prefect-worker
+    release_namespace: "{{ prefect_namespace }}"
+    create_namespace: yes
+    values_files:
+      - /tmp/prefect-worker-values.yml
+    wait: true
+    wait_timeout: 5m
+  become_user: "{{ ansible_user }}"
+
+- name: Create additional Kubernetes resources for Prefect
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: ClusterRoleBinding
+      metadata:
+        name: prefect-worker-cluster-admin
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: cluster-admin
+      subjects:
+      - kind: ServiceAccount
+        name: prefect-worker
+        namespace: "{{ prefect_namespace }}"
+  become_user: "{{ ansible_user }}"
+  when: prefect_worker_cluster_admin | default(false)
+
+- name: Clean up temporary values file
+  file:
+    path: /tmp/prefect-worker-values.yml
+    state: absent
+
+- name: Wait for Prefect worker to be ready
+  kubernetes.core.k8s_info:
+    api_version: v1
+    kind: Pod
+    namespace: "{{ prefect_namespace }}"
+    label_selectors:
+      - app.kubernetes.io/name=prefect-worker
+  register: worker_pods
+  until: worker_pods.resources | length > 0 and worker_pods.resources[0].status.phase == "Running"
+  retries: 30
+  delay: 10
+  become_user: "{{ ansible_user }}"

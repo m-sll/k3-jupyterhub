@@ -1,0 +1,35 @@
+worker:
+  cloudApiConfig:
+  apiConfig: selfHostedServer
+
+  selfHostedServerApiConfig:
+    apiUrl: "{{ prefect_api_url }}"
+  
+  config:
+    workPool: {{ prefect_work_pool }}
+
+  replicaCount: {{ prefect_worker_replicas | default(1) }}
+
+  resources:
+    limits:
+      cpu: {{ prefect_worker_cpu_limit | default('1000m') }}
+      memory: {{ prefect_worker_memory_limit | default('2Gi') }}
+    requests:
+      cpu: {{ prefect_worker_cpu_request | default('100m') }}
+      memory: {{ prefect_worker_memory_request | default('256Mi') }}
+
+  env:
+{% if prefect_worker_env is defined %}
+{% for env_var in prefect_worker_env %}
+    - name: {{ env_var.name }}
+      value: "{{ env_var.value }}"
+{% endfor %}
+{% endif %}
+    - name: PREFECT_API_URL
+      value: "{{ prefect_api_url }}"
+    - name: PREFECT_LOGGING_LEVEL
+      value: "{{ prefect_logging_level | default('INFO') }}"
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

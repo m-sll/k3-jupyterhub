@@ -1,0 +1,35 @@
+# K3s configuration
+k3s_version: "v1.33.2+k3s1"
+k3s_config_dir: /etc/rancher/k3s
+k3s_service_cidr: "10.43.0.0/16"
+k3s_cluster_cidr: "10.42.0.0/16"
+
+# Firewall configuration
+nftables_config_path: /etc/nftables.conf
+
+# Helm configuration
+helm_version: "v3.16.0"
+helm_repos:
+  - name: jetstack
+    url: https://charts.jetstack.io
+  - name: jupyterhub
+    url: https://hub.jupyter.org/helm-chart/
+  - name: prefect
+    url: https://prefecthq.github.io/prefect-helm
+
+# JupyterHub configuration
+jupyterhub_namespace: jhub
+jupyterhub_domain: jhub.plusai.is
+jupyterhub_chart_version: "4.2.0"
+
+# Prefect configuration
+prefect_namespace: prefect
+prefect_api_url: https://prefect.plusai.is/api
+prefect_work_pool: k3s
+
+# Cert-manager configuration
+certmanager_namespace: cert-manager
+
+letsencrypt_email: "{{ lookup('env', 'LETSENCRYPT_EMAIL') | default('') }}"
+cloudflare_email: "{{ lookup('env', 'CLOUDFLARE_EMAIL') | default('') }}"
+cloudflare_api_token: "{{ lookup('env', 'CLOUDFLARE_API_TOKEN') | default('') }}" 

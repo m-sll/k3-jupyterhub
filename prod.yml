@@ -1,0 +1,28 @@
+---
+- name: Install and configure K3s and NFTables firewall
+  hosts: k3s_cluster
+  gather_facts: yes
+  become: yes
+  
+  roles:
+    - nftables
+    - k3s
+  
+  post_tasks:
+    - name: Verify K3s installation
+      command: k3s kubectl get nodes
+      register: k3s_nodes
+      changed_when: false
+      
+    - name: Display K3s nodes
+      debug:
+        var: k3s_nodes.stdout_lines
+    
+    - name: Verify NFTables rules
+      command: nft list ruleset
+      register: nft_rules
+      changed_when: false
+      
+    - name: Display active firewall rules
+      debug:
+        var: nft_rules.stdout_lines

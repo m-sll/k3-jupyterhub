@@ -1,0 +1,32 @@
+*.retry
+*.pyc
+__pycache__/
+.vagrant/
+.cache/
+*.log
+
+# Ansible vault files
+vault.yml
+**/vault.yml
+*.vault
+
+# Temporary files
+/tmp/
+*.tmp
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Ansible facts cache
+/tmp/ansible_facts_cache/
+
+# Test outputs
+test-results/
+coverage/

@@ -1,0 +1,9 @@
+---
+# Prefect Worker defaults
+prefect_worker_replicas: 1
+prefect_worker_cpu_limit: '1000m'
+prefect_worker_memory_limit: '2Gi'
+prefect_worker_cpu_request: '100m'
+prefect_worker_memory_request: '256Mi'
+prefect_logging_level: 'INFO'
+prefect_worker_cluster_admin: false

@@ -1,0 +1,70 @@
+singleuser:
+  defaultUrl: "/lab"
+  extraEnv:
+    JUPYTERHUB_SINGLEUSER_APP: "jupyter_server.serverapp.ServerApp"
+  image:
+    name: quay.io/jupyter/tensorflow-notebook
+    tag: tensorflow-2.19.0
+  storage:
+    capacity: 64Gi
+  memory:
+    guarantee: 1G
+    limit: 16G
+  cpu:
+    limit: 6
+    guarantee: 0.5
+
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-issuer
+  enabled: true
+  ingressClassName: traefik
+  hosts:
+  - {{ jupyterhub_domain }}
+  tls:
+  - hosts:
+    - {{ jupyterhub_domain }}
+    secretName: jhub-cert
+
+proxy:
+  service:
+    type: ClusterIP
+
+hub:
+  config:
+{% if auth0_client_id is defined and auth0_client_secret is defined %}
+    Auth0OAuthenticator:
+      client_id: {{ auth0_client_id }}
+      client_secret: {{ auth0_client_secret }}
+      oauth_callback_url: https://{{ jupyterhub_domain }}/hub/oauth_callback
+      auth0_domain: {{ auth0_domain | default('dev-yx4gqv6q52wz1g4s.us.auth0.com') }}
+      scope:
+        - openid
+        - email
+        - profile
+      username_claim: nickname
+    JupyterHub:
+      authenticator_class: auth0
+      admin_access: true
+    Authenticator:
+      enable_auth_state: true
+      auto_login: true
+      allowed_users:
+{% if jupyterhub_allowed_users is defined %}
+{% for user in jupyterhub_allowed_users %}
+        - {{ user }}
+{% endfor %}
+{% endif %}
+      admin_users:
+{% if jupyterhub_admin_users is defined %}
+{% for user in jupyterhub_admin_users %}
+        - {{ user }}
+{% endfor %}
+{% endif %}
+{% else %}
+    # Default dummy authenticator for testing
+    JupyterHub:
+      authenticator_class: dummy
+    DummyAuthenticator:
+      password: jupyterhub
+{% endif %}

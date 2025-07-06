@@ -1,0 +1,40 @@
+---
+- name: Deploy Prefect Worker on K3s
+  hosts: k3s_cluster
+  gather_facts: yes
+  become: yes
+  
+  pre_tasks:
+    - name: Ensure K3s is running
+      systemd:
+        name: k3s
+        state: started
+    
+    - name: Create Prefect namespace
+      kubernetes.core.k8s:
+        name: "{{ prefect_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+      become_user: "{{ ansible_user }}"
+  
+  roles:
+    - prefect_worker
+  
+  post_tasks:
+    - name: Get Prefect worker pods
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: "{{ prefect_namespace }}"
+        label_selectors:
+          - app.kubernetes.io/name=prefect-worker
+      register: worker_pods
+      become_user: "{{ ansible_user }}"
+    
+    - name: Display Prefect worker status
+      debug:
+        msg:
+          - "Prefect workers deployed: {{ worker_pods.resources | length }}"
+          - "Worker pool: {{ prefect_work_pool }}"
+          - "API URL: {{ prefect_api_url }}"

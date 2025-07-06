@@ -1,0 +1,11 @@
+---
+# JupyterHub defaults
+jupyterhub_allowed_users:
+  - he
+  - lls
+
+jupyterhub_admin_users:
+  - he
+
+# Auth0 settings (override in group_vars or with vault)
+auth0_domain: dev-yx4gqv6q52wz1g4s.us.auth0.com

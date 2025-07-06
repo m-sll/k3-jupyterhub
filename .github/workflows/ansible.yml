@@ -36,7 +36,6 @@ jobs:
             eval "$(ssh-agent -s)"
             ssh-add - <<< "${{ secrets.HOST_KEY }}"
             echo $PWD
-            mkdir -p inventories/infra
             cat > inventories/infra/hosts.yml <<'EOF'
           infra:
             hosts:
@@ -50,7 +49,6 @@ jobs:
           else
             eval "$(ssh-agent -s)"
             ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
-            mkdir -p inventories/prod
             cat > inventories/prod/hosts.yml <<'EOF'
           k3s_cluster:
             hosts:
@@ -61,6 +59,7 @@ jobs:
               ansible_python_interpreter: /usr/bin/python3
           EOF
           fi
+          cat inventories/${{ github.event.inputs.type }}/hosts.yml
 
       # ---------- infra flow ----------
       - name: Run infra playbook

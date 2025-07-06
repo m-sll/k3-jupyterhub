@@ -28,30 +28,27 @@ jobs:
           pip install ansible-core==2.16.6
           ansible-galaxy collection install -r requirements.yml
 
-      # ---------- SSH access ----------
-      - name: Add SSH key
-        run: |
-          eval "$(ssh-agent -s)"
-          ssh-add - <<< "${{ secrets.HOST_KEY }}"
-          ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
-
       # ---------- dynamic inventory ----------
       - name: Generate inventory file
         shell: bash
         run: |
           if [[ "${{ github.event.inputs.type }}" == "infra" ]]; then
+            eval "$(ssh-agent -s)"
+            ssh-add - <<< "${{ secrets.HOST_KEY }}"
             mkdir -p inventories/infra
             cat > inventories/infra/hosts.yml <<'EOF'
           infra:
             hosts:
               tencent-ubuntu-va:
                 ansible_host: ${{ secrets.HOST1_IP }}
-                ansible_user: ${{ secrets.HOST1_USER }}
+                ansible_user: ${{ secrets.HOST1_ADMIN_USER }}
             vars:
               ansible_become: yes
               ansible_python_interpreter: /usr/bin/python3
           EOF
           else
+            eval "$(ssh-agent -s)"
+            ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
             mkdir -p inventories/prod
             cat > inventories/prod/hosts.yml <<'EOF'
           k3s_cluster:

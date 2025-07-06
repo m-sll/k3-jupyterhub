@@ -3,7 +3,7 @@
   ansible.builtin.pip:
     name: kubernetes
     state: present
-  become_user: "{{ ansible_user }}"
+  become: yes
 
 - name: Create JupyterHub namespace
   kubernetes.core.k8s:

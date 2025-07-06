@@ -33,9 +33,6 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ github.event.inputs.type }}" == "infra" ]]; then
-            eval "$(ssh-agent -s)"
-            ssh-add - <<< "${{ secrets.HOST_KEY }}"
-            echo $PWD
             cat > inventories/infra/hosts.yml <<'EOF'
           infra:
             hosts:
@@ -47,8 +44,6 @@ jobs:
               ansible_python_interpreter: /usr/bin/python3
           EOF
           else
-            eval "$(ssh-agent -s)"
-            ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
             cat > inventories/prod/hosts.yml <<'EOF'
           k3s_cluster:
             hosts:
@@ -67,12 +62,16 @@ jobs:
         env:
           ANSIBLE_SSH_PUBLIC_KEY: ${{ secrets.ANSIBLE_SSH_PUBLIC_KEY }}
         run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.HOST_KEY }}"
           ansible-playbook -i inventories/infra infra.yml
 
       # ---------- prod flow ----------
       - name: Run prod playbook
         if: ${{ github.event.inputs.type == 'prod' }}
         run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
           ansible-playbook -i inventories/prod prod.yml
 
       # ---------- app flow ----------
@@ -83,5 +82,7 @@ jobs:
           CLOUDFLARE_EMAIL: ${{ secrets.CLOUDFLARE_EMAIL }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          eval "$(ssh-agent -s)"
+          ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
           ansible-playbook -i inventories/prod jupyter_hub.yml
           # Add any additional app playbooks here

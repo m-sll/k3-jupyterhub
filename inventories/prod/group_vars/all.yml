@@ -19,7 +19,7 @@ helm_repos:
 
 # JupyterHub configuration
 jupyterhub_namespace: jhub
-jupyterhub_domain: jhub.plusai.is
+jupyterhub_domain: jhub-test.plusai.is
 jupyterhub_chart_version: "4.2.0"
 
 # Prefect configuration

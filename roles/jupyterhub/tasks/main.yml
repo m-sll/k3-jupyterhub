@@ -7,6 +7,16 @@
     state: present
   become_user: "{{ ansible_user }}"
 
+- name: Create a plusai.is A record
+  community.general.cloudflare_dns:
+    zone: plusai.is
+    record: test
+    type: A
+    value: "{{ ansible_host }}"
+    account_email: "{{ cloudflare_email }}"
+    account_api_key: "{{ cloudflare_api_token }}"
+  register: record
+
 - name: Create Cloudflare API token secret
   kubernetes.core.k8s:
     state: present

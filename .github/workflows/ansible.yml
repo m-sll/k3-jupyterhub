@@ -54,8 +54,6 @@ jobs:
               ansible_python_interpreter: /usr/bin/python3
           EOF
           fi
-          cat inventories/${{ github.event.inputs.type }}/hosts.yml
-
       # ---------- infra flow ----------
       - name: Run infra playbook
         if: ${{ github.event.inputs.type == 'infra' }}

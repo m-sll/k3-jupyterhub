@@ -33,9 +33,7 @@ jobs:
         run: |
           eval "$(ssh-agent -s)"
           ssh-add - <<< "${{ secrets.HOST_KEY }}"
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          ssh-keyscan -H "${{ secrets.HOST1_IP }}" >> ~/.ssh/known_hosts
+          ssh-add - <<< "${{ secrets.HOST_KEY2 }}"
 
       # ---------- dynamic inventory ----------
       - name: Generate inventory file

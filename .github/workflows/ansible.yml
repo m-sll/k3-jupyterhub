@@ -35,6 +35,7 @@ jobs:
           if [[ "${{ github.event.inputs.type }}" == "infra" ]]; then
             eval "$(ssh-agent -s)"
             ssh-add - <<< "${{ secrets.HOST_KEY }}"
+            echo $PWD
             mkdir -p inventories/infra
             cat > inventories/infra/hosts.yml <<'EOF'
           infra:
